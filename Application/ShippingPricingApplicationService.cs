@@ -36,6 +36,47 @@ public sealed class ShippingPricingApplicationService
         return new BatchShippingPriceResponse(quotes);
     }
 
+    public async Task<FreightPricingResponse> CalculateFreightAsync(FreightPricingRequest request, CancellationToken cancellationToken)
+    {
+        var batchRequest = new BatchShippingPriceRequest(
+            request.BuyerId,
+            request.SellerId,
+            request.DestinationPostalCode,
+            request.CartTotal,
+            request.Currency,
+            request.RequestedAtUtc,
+            [
+                new ShippingPriceCandidateRequest(
+                    CandidateId: request.RouteId,
+                    RouteId: request.RouteId,
+                    OriginNodeId: request.OriginNodeId,
+                    CarrierCode: request.CarrierCode,
+                    ServiceLevelCode: request.ServiceLevelCode,
+                    Package: request.Package)
+            ]);
+
+        var response = await QuoteBatchAsync(batchRequest, cancellationToken);
+        var quote = response.Quotes.Single();
+        var subsidyAmount = SumNullable(quote.PlatformSubsidy, quote.SellerSubsidy, quote.Discount);
+
+        return new FreightPricingResponse(
+            quote.Available,
+            quote.QuoteId,
+            request.RouteId,
+            request.CarrierCode,
+            request.ServiceLevelCode,
+            quote.Currency,
+            quote.ChargeableWeightKg,
+            quote.LogisticsCost,
+            subsidyAmount,
+            quote.CustomerPrice,
+            quote.Adjustments,
+            quote.RateCardVersion,
+            quote.Source,
+            quote.ExpiresAt,
+            quote.UnavailableReason);
+    }
+
     public Task<ShippingPriceQuoteResponse?> GetQuoteAsync(Guid quoteId, CancellationToken cancellationToken)
     {
         return _cache.GetQuoteAsync(quoteId, cancellationToken);
@@ -118,6 +159,11 @@ public sealed class ShippingPricingApplicationService
     private static ShippingPriceQuoteResponse Unavailable(ShippingPriceCandidateRequest candidate, string currency, string reason)
     {
         return new ShippingPriceQuoteResponse(candidate.CandidateId, false, null, candidate.RouteId, currency, null, null, null, null, null, null, [], null, "Calculated", null, reason);
+    }
+
+    private static decimal? SumNullable(params decimal?[] values)
+    {
+        return values.All(value => value is null) ? null : values.Sum(value => value ?? 0);
     }
 
     private static long NormalizePostalCode(string postalCode)
