@@ -142,7 +142,7 @@ public sealed class ShippingPricingApplicationService
                 expiresAt,
                 null);
 
-            var quoteTtl = expiresAt - DateTimeOffset.UtcNow;
+            var quoteTtl = expiresAt - requestedAt;
             if (quoteTtl > TimeSpan.Zero)
                 await _cache.SetQuoteAsync(quoteId, response, quoteTtl, cancellationToken);
 

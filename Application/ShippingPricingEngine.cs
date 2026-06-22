@@ -22,7 +22,7 @@ public sealed class ShippingPricingEngine
         adjustments.Add(new PriceAdjustment("BASE_FREIGHT", "Base freight", PriceAdjustmentType.BaseFreight, baseFreight));
 
         var excessWeight = Math.Max(0, chargeableWeight - policy.Rate.IncludedWeightKg);
-        var weightIncrements = excessWeight <= 0 ? 0 : Math.Ceiling(excessWeight / policy.Rate.WeightIncrementKg);
+        var weightIncrements = excessWeight <= 0 ? 0 : Math.Round(excessWeight / policy.Rate.WeightIncrementKg, MidpointRounding.AwayFromZero);
         var weightCharge = Round(weightIncrements * policy.Rate.PricePerWeightIncrement);
 
         if (weightCharge > 0)
