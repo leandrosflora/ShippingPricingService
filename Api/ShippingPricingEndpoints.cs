@@ -7,6 +7,20 @@ public static class ShippingPricingEndpoints
 {
     public static IEndpointRouteBuilder MapShippingPricingEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapPost("/v1/pricing/freight", async (
+            FreightPricingRequest request,
+            ShippingPricingApplicationService service,
+            CancellationToken cancellationToken) =>
+        {
+            var response = await service.CalculateFreightAsync(request, cancellationToken);
+            IResult result = response.Available
+                ? Results.Ok(response)
+                : Results.UnprocessableEntity(response);
+
+            return result;
+        })
+        .WithTags("Shipping Pricing");
+
         var group = app.MapGroup("/shipping-prices")
             .WithTags("Shipping Pricing");
 

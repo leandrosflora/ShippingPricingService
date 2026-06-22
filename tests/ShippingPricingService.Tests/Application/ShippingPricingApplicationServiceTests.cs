@@ -114,6 +114,37 @@ public sealed class ShippingPricingApplicationServiceTests
         Assert.Equal(cachedQuote.QuoteId, quote.QuoteId);
     }
 
+    [Fact]
+    public async Task CalculateFreightAsync_returns_documented_freight_cost_fields()
+    {
+        var service = CreateService(new FakePricingPolicyProvider(CreatePolicy()), new InMemoryShippingPriceCache());
+        var batchRequest = CreateRequest(destinationPostalCode: "01001-000");
+        var candidate = batchRequest.Candidates.Single();
+        var request = new FreightPricingRequest(
+            batchRequest.BuyerId,
+            batchRequest.SellerId,
+            batchRequest.DestinationPostalCode,
+            batchRequest.CartTotal,
+            batchRequest.Currency,
+            batchRequest.RequestedAtUtc,
+            candidate.RouteId,
+            candidate.OriginNodeId,
+            candidate.CarrierCode,
+            candidate.ServiceLevelCode,
+            candidate.Package);
+
+        var response = await service.CalculateFreightAsync(request, CancellationToken.None);
+
+        Assert.True(response.Available);
+        Assert.Equal("route-1", response.RouteId);
+        Assert.Equal("MELI", response.CarrierCode);
+        Assert.Equal("standard", response.ServiceLevelCode);
+        Assert.Equal(17.50m, response.GrossCost);
+        Assert.Equal(0m, response.SubsidyAmount);
+        Assert.Equal(17.50m, response.BuyerCost);
+        Assert.Null(response.UnavailableReason);
+    }
+
     private static ShippingPricingApplicationService CreateService(IPricingPolicyProvider policyProvider, IShippingPriceCache cache)
     {
         return new ShippingPricingApplicationService(

@@ -9,6 +9,19 @@ public sealed record BatchShippingPriceRequest(
     DateTimeOffset? RequestedAtUtc,
     IReadOnlyList<ShippingPriceCandidateRequest> Candidates);
 
+public sealed record FreightPricingRequest(
+    Guid BuyerId,
+    Guid SellerId,
+    string DestinationPostalCode,
+    decimal CartTotal,
+    string Currency,
+    DateTimeOffset? RequestedAtUtc,
+    string RouteId,
+    Guid OriginNodeId,
+    string CarrierCode,
+    string ServiceLevelCode,
+    PackageProfileDto Package);
+
 public sealed record ShippingPriceCandidateRequest(
     string CandidateId,
     string RouteId,
@@ -26,6 +39,23 @@ public sealed record PackageProfileDto(
 
 public sealed record BatchShippingPriceResponse(
     IReadOnlyList<ShippingPriceQuoteResponse> Quotes);
+
+public sealed record FreightPricingResponse(
+    bool Available,
+    Guid? QuoteId,
+    string RouteId,
+    string CarrierCode,
+    string ServiceLevelCode,
+    string Currency,
+    decimal? ChargeableWeightKg,
+    decimal? GrossCost,
+    decimal? SubsidyAmount,
+    decimal? BuyerCost,
+    IReadOnlyList<PriceAdjustmentResponse> Adjustments,
+    long? RateCardVersion,
+    string Source,
+    DateTimeOffset? ExpiresAt,
+    string? UnavailableReason);
 
 public sealed record ShippingPriceQuoteResponse(
     string CandidateId,
